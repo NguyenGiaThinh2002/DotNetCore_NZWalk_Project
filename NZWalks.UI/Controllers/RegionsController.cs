@@ -62,17 +62,73 @@ namespace NZWalks.UI.Controllers
             };
 
             var httpResponseMessage = await client.SendAsync(httpRequestMessage);
-            httpResponseMessage.EnsureSuccessStatusCode();
 
-            var respose = await httpResponseMessage.Content.ReadFromJsonAsync<RegionDto>();
-
-            if (respose is not null)
+            if (httpResponseMessage.IsSuccessStatusCode)
             {
-                return RedirectToAction("Index", "Regions");
+                var response = await httpResponseMessage.Content.ReadFromJsonAsync<RegionDto>();
+                if (response is not null)
+                {
+                    return RedirectToAction("Index", "Regions");
+                }
+            }
+            else
+            {
+                var errorContent = await httpResponseMessage.Content.ReadAsStringAsync();
+
+                try
+                {
+                    // Deserialize error response
+                    var errorDoc = JsonDocument.Parse(errorContent);
+                    if (errorDoc.RootElement.TryGetProperty("errors", out var errorsElement))
+                    {
+                        foreach (var errorProperty in errorsElement.EnumerateObject())
+                        {
+                            foreach (var errorMessage in errorProperty.Value.EnumerateArray())
+                            {
+                                // Store the first error in TempData (for showing alert in view)
+                                TempData["ApiError"] = errorMessage.GetString();
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        TempData["ApiError"] = "Something went wrong while adding the region.";
+                    }
+                }
+                catch
+                {
+                    TempData["ApiError"] = "Unexpected error: " + errorContent;
+                }
             }
 
-            return View();
+            return View(model);
         }
+
+
+        //public async Task<IActionResult> Add(AddRegionViewModel model)
+        //{
+        //    var client = httpClientFactory.CreateClient();
+
+        //    var httpRequestMessage = new HttpRequestMessage()
+        //    {
+        //        Method = HttpMethod.Post,
+        //        RequestUri = new Uri("https://localhost:7081/api/regions"),
+        //        Content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json")
+        //    };
+
+        //    var httpResponseMessage = await client.SendAsync(httpRequestMessage);
+        //    httpResponseMessage.EnsureSuccessStatusCode();
+
+        //    var respose = await httpResponseMessage.Content.ReadFromJsonAsync<RegionDto>();
+
+        //    if (respose is not null)
+        //    {
+        //        return RedirectToAction("Index", "Regions");
+        //    }
+
+        //    return View();
+        //}
 
 
         [HttpGet]

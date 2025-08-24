@@ -36,11 +36,20 @@ namespace NZWalks.API.Controllers
         //[Authorize(Roles = "Reader")]
         public async Task<IActionResult> GetAll()
         {
-            // Get Data From Database - Domain models
-            var regionsDomain = await regionRepository.GetAllAsync();
+            try
+            {
+                // Get Data From Database - Domain models
+                var regionsDomain = await regionRepository.GetAllAsync();
+                var t = regionsDomain;
+                // Return DTOs
+                return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
+            }
+            catch (Exception ex)
+            {
+                string error = ex.Message;
+                return default;
+            }
 
-            // Return DTOs
-            return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
         }
 
 

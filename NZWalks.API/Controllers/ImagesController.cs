@@ -23,6 +23,7 @@ namespace NZWalks.API.Controllers
         [Route("Upload")]
         public async Task<IActionResult> Upload([FromForm] ImageUploadRequestDto request)
         {
+            /// put a debug point here to check the request object, do you see
             ValidateFileUpload(request);
 
             if (ModelState.IsValid)
